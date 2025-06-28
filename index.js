@@ -1,7 +1,3 @@
-// LINE Messaging API 用 Node.js 自作Botテンプレート
-// 日付を「明日から12日分」自動生成して
-// クイックリプライボタンとして表示
-
 const express = require('express');
 const line = require('@line/bot-sdk');
 const dayjs = require('dayjs');
@@ -9,18 +5,19 @@ require('dayjs/locale/ja');
 dayjs.locale('ja');
 
 const config = {
-  channelAccessToken: 'YOUR_CHANNEL_ACCESS_TOKEN',
-  channelSecret: 'YOUR_CHANNEL_SECRET'
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET
 };
 
 const app = express();
 const client = new line.Client(config);
 
 app.post('/webhook', line.middleware(config), (req, res) => {
-  Promise.all(req.body.events.map(handleEvent))
+  Promise
+    .all(req.body.events.map(handleEvent))
     .then(result => res.json(result))
     .catch(err => {
-      console.error(err);
+      console.error('Error handling event:', err);
       res.status(500).end();
     });
 });
@@ -43,23 +40,20 @@ function generateDateQuickReplies() {
 
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
-    return null;
+    return Promise.resolve(null);
   }
 
   const userMessage = event.message.text;
 
   if (userMessage === '予約') {
-    const message = {
+    return client.replyMessage(event.replyToken, {
       type: 'text',
       text: 'ご希望の日付をお選びください👇',
       quickReply: {
         items: generateDateQuickReplies()
       }
-    };
-    return client.replyMessage(event.replyToken, message);
+    });
   }
-
-  // その他の応答処理（診療内容の選択など）もここに追加可能
 
   return client.replyMessage(event.replyToken, {
     type: 'text',
