@@ -1,4 +1,3 @@
-// LINE Bot with date and time selection (fully working version)
 const express = require('express');
 const line = require('@line/bot-sdk');
 const dayjs = require('dayjs');
@@ -13,7 +12,6 @@ const config = {
 const app = express();
 const client = new line.Client(config);
 
-// Webhook endpoint
 app.post('/webhook', line.middleware(config), (req, res) => {
   Promise
     .all(req.body.events.map(handleEvent))
@@ -24,7 +22,6 @@ app.post('/webhook', line.middleware(config), (req, res) => {
     });
 });
 
-// Generate date quick replies
 function generateDateQuickReplies() {
   const items = [];
   for (let i = 1; i <= 12; i++) {
@@ -41,7 +38,6 @@ function generateDateQuickReplies() {
   return items;
 }
 
-// Generate time options
 function generateTimeQuickReplies() {
   const times = ['9:00', '10:00', '11:00', '13:45', '14:45', '15:45', '16:45'];
   return times.map(time => ({
@@ -54,12 +50,14 @@ function generateTimeQuickReplies() {
   }));
 }
 
-// Simple date format checker
 function isDateFormat(str) {
   return /^\d{4}-\d{2}-\d{2}$/.test(str);
 }
 
-// Main event handler
+function isTimeFormat(str) {
+  return /^(9|10|11):00$|^1[3-6]:45$/.test(str);
+}
+
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
@@ -87,11 +85,14 @@ async function handleEvent(event) {
     });
   }
 
-  // Final confirmation
-  return client.replyMessage(event.replyToken, {
-    type: 'text',
-    text: `「${userMessage}」で予約を承りました。`
-  });
+  if (isTimeFormat(userMessage)) {
+    return client.replyMessage(event.replyToken, {
+      type: 'text',
+      text: `「${userMessage}」にて承知しました。担当者からご連絡させていただきます。※返信は営業時間内になります。ご了承ください`
+    });
+  }
+
+  return Promise.resolve(null);
 }
 
 const port = process.env.PORT || 3000;
