@@ -13,7 +13,7 @@ const config = {
 const app = express();
 const client = new line.Client(config);
 
-// ユーザーごとの選択日付を一時記録（簡易セッション）
+// ユーザーごとの選択日付を一時記録
 const userDateMap = new Map();
 
 // Webhookエンドポイント
@@ -26,7 +26,7 @@ app.post('/webhook', line.middleware(config), (req, res) => {
     });
 });
 
-// 日付ボタン生成（明日から12日分）
+// 日付クイックリプライ生成
 function generateDateQuickReplies() {
   const items = [];
   for (let i = 1; i <= 12; i++) {
@@ -43,27 +43,14 @@ function generateDateQuickReplies() {
   return items;
 }
 
-// 時間ボタン生成
-function generateTimeQuickReplies() {
-  const times = ['9:00', '10:00', '11:00', '13:45', '14:45', '15:45', '16:45'];
-  return times.map(time => ({
-    type: 'action',
-    action: {
-      type: 'message',
-      label: time,
-      text: time
-    }
-  }));
+// 時間形式判定
+function isTimeFormat(str) {
+  return /^(9|10|11):00$|^1[3-6]:45$/.test(str);
 }
 
 // 日付形式判定
 function isDateFormat(str) {
   return /^\d{4}-\d{2}-\d{2}$/.test(str);
-}
-
-// 時間形式判定
-function isTimeFormat(str) {
-  return /^(9|10|11):00$|^1[3-6]:45$/.test(str);
 }
 
 // メイン処理
@@ -75,7 +62,7 @@ async function handleEvent(event) {
   const userId = event.source.userId;
   const userMessage = event.message.text;
 
-  // 「予約」と送られたら → 日付を提示
+  // 「予約」→ 日付選択
   if (userMessage === '予約') {
     return client.replyMessage(event.replyToken, {
       type: 'text',
@@ -86,29 +73,58 @@ async function handleEvent(event) {
     });
   }
 
-  // 日付が選ばれたら記録 → 時間を提示
+  // 日付を選んだ場合 → Flex Messageで時間縦並び表示
   if (isDateFormat(userMessage)) {
     userDateMap.set(userId, userMessage);
+
+    const timeButtons = ['9:00', '10:00', '11:00', '13:45', '14:45', '15:45', '16:45'].map(t => {
+      return {
+        type: 'button',
+        action: {
+          type: 'message',
+          label: t,
+          text: t
+        },
+        style: 'primary',
+        margin: 'sm'
+      };
+    });
+
     return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: `「${userMessage}」ですね。ご希望の時間帯をお選びください👇`,
-      quickReply: {
-        items: generateTimeQuickReplies()
+      type: 'flex',
+      altText: '時間帯を選択してください',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'text',
+              text: `「${userMessage}」ですね。\nご希望の時間帯をお選びください👇`,
+              wrap: true,
+              weight: 'bold',
+              size: 'md',
+              margin: 'md'
+            },
+            ...timeButtons
+          ]
+        }
       }
     });
   }
 
-  // 時間が選ばれたら、日付と組み合わせて返信
+  // 時間を選んだ場合 → 日付と組み合わせて確認メッセージ
   if (isTimeFormat(userMessage)) {
     const selectedDate = userDateMap.get(userId);
     if (selectedDate) {
-      userDateMap.delete(userId); // 一度使ったら削除（1回きりのセッションとして）
+      userDateMap.delete(userId);
       return client.replyMessage(event.replyToken, {
         type: 'text',
         text: `「${selectedDate} の ${userMessage}」にて承知しました。担当者からご連絡させていただきます。※返信は営業時間内になります。ご了承ください`
       });
     } else {
-      // 日付未選択で時間だけ送られた場合
       return client.replyMessage(event.replyToken, {
         type: 'text',
         text: '先に日付をお選びください。'
@@ -116,7 +132,6 @@ async function handleEvent(event) {
     }
   }
 
-  // その他の入力には無反応
   return Promise.resolve(null);
 }
 
