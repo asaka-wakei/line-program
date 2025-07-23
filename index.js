@@ -28,7 +28,7 @@ function isDateFormat(str) {
 }
 
 function isTimeFormat(str) {
-  return /^(9|10|11):00$|^(13:30|14:00|15:00|16:00)$.test(str);
+  return /^(9|10|11):00$|^(13:30|14:00|15:00|16:00)$/.test(str);
 }
 
 // 日付Flex Message生成
