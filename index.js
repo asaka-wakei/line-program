@@ -28,7 +28,7 @@ function isDateFormat(str) {
 }
 
 function isTimeFormat(str) {
-  return /^(9|10|11):00$|^1[3-6]:45$/.test(str);
+  return /^(9|10|11):00$|^(13:30|14:00|15:00|16:00)$.test(str);
 }
 
 // 日付Flex Message生成
@@ -77,7 +77,7 @@ function generateDateFlexMessage() {
 
 // 時間Flex Message生成
 function generateTimeFlexMessage(selectedDate) {
-  const times = ['9:00', '10:00', '11:00', '13:45', '14:45', '15:45', '16:45'];
+  const times = ['9:00', '10:00', '11:00', '13:30', '14:00', '15:00', '16:00'];
   const timeButtons = times.map(time => ({
     type: 'button',
     action: {
