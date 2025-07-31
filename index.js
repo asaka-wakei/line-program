@@ -33,7 +33,7 @@ function isTimeFormat(str) {
 function createTypeSelectionFlex() {
   return {
     type: 'flex',
-    altText: '種別を選択してください',
+    altText: 'ご用件をお選びください',
     contents: {
       type: 'bubble',
       body: {
@@ -161,7 +161,7 @@ async function handleEvent(event) {
   const userId = event.source.userId;
   const text = event.message.text;
 
-  if (text === '種別選択') {
+  if (text === '用件選択') {
     return client.replyMessage(event.replyToken, createTypeSelectionFlex());
   }
 
