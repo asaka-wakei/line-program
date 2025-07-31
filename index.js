@@ -43,7 +43,7 @@ function createTypeSelectionFlex() {
         contents: [
           {
             type: 'text',
-            text: 'ご希望の種別をお選びください',
+            text: 'ご用件をお選びください。',
             wrap: true,
             weight: 'bold',
             size: 'md',
@@ -66,7 +66,8 @@ function createTypeSelectionFlex() {
               label: '予約変更・その他お問い合わせ',
               text: '予約変更・その他お問い合わせ'
             },
-            style: 'secondary',
+            style: 'primary',
+            color: '#00B900',
             margin: 'sm'
           }
         ]
