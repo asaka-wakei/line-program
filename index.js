@@ -11,7 +11,6 @@ const config = {
 
 const app = express();
 const client = new line.Client(config);
-
 const userDateMap = new Map();
 
 app.post('/webhook', line.middleware(config), (req, res) => {
@@ -28,22 +27,64 @@ function isDateFormat(str) {
 }
 
 function isTimeFormat(str) {
-  return /^(9|10|11):00$|^(13:30|14:00|15:00|16:00)$/.test(str);
+  return /^(8:45|9:00|10:00|11:00|13:30|14:00|15:00|16:00|16:15)$/.test(str);
 }
 
-// 日付Flex Message生成
-function generateDateFlexMessage() {
-  const dateButtons = [];
-  for (let i = 1; i <= 12; i++) {
+function createTypeSelectionFlex() {
+  return {
+    type: 'flex',
+    altText: '種別を選択してください',
+    contents: {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'text',
+            text: 'ご希望の種別をお選びください',
+            wrap: true,
+            weight: 'bold',
+            size: 'md',
+            margin: 'md'
+          },
+          {
+            type: 'button',
+            action: {
+              type: 'message',
+              label: '新規予約',
+              text: '新規予約'
+            },
+            style: 'primary',
+            margin: 'sm'
+          },
+          {
+            type: 'button',
+            action: {
+              type: 'message',
+              label: '予約変更・その他お問い合わせ',
+              text: '予約変更・その他お問い合わせ'
+            },
+            style: 'secondary',
+            margin: 'sm'
+          }
+        ]
+      }
+    }
+  };
+}
+
+function createDateFlexMessage() {
+  const contents = [];
+  for (let i = 0; i < 14; i++) {
     const date = dayjs().add(i, 'day');
-    const label = date.format('M/D (dd)');
-    const text = date.format('YYYY-MM-DD');
-    dateButtons.push({
+    contents.push({
       type: 'button',
       action: {
         type: 'message',
-        label,
-        text
+        label: date.format('M/D (dd)'),
+        text: date.format('YYYY-MM-DD')
       },
       style: 'primary',
       margin: 'sm'
@@ -58,7 +99,6 @@ function generateDateFlexMessage() {
       body: {
         type: 'box',
         layout: 'vertical',
-        spacing: 'sm',
         contents: [
           {
             type: 'text',
@@ -68,17 +108,16 @@ function generateDateFlexMessage() {
             size: 'md',
             margin: 'md'
           },
-          ...dateButtons
+          ...contents
         ]
       }
     }
   };
 }
 
-// 時間Flex Message生成
-function generateTimeFlexMessage(selectedDate) {
-  const times = ['9:00', '10:00', '11:00', '13:30', '14:00', '15:00', '16:00'];
-  const timeButtons = times.map(time => ({
+function createTimeFlexMessage(date) {
+  const times = ['8:45','9:00','10:00','11:00','13:30','14:00','15:00','16:00','16:15'];
+  const buttons = times.map(time => ({
     type: 'button',
     action: {
       type: 'message',
@@ -97,17 +136,16 @@ function generateTimeFlexMessage(selectedDate) {
       body: {
         type: 'box',
         layout: 'vertical',
-        spacing: 'sm',
         contents: [
           {
             type: 'text',
-            text: `「${selectedDate}」ですね。\nご希望の時間帯をお選びください👇`,
+            text: `「${date}」ですね。\nご希望の時間帯をお選びください👇`,
             wrap: true,
             weight: 'bold',
             size: 'md',
             margin: 'md'
           },
-          ...timeButtons
+          ...buttons
         ]
       }
     }
@@ -120,24 +158,35 @@ async function handleEvent(event) {
   }
 
   const userId = event.source.userId;
-  const userMessage = event.message.text;
+  const text = event.message.text;
 
-  if (userMessage === '予約') {
-    return client.replyMessage(event.replyToken, generateDateFlexMessage());
+  if (text === '種別選択') {
+    return client.replyMessage(event.replyToken, createTypeSelectionFlex());
   }
 
-  if (isDateFormat(userMessage)) {
-    userDateMap.set(userId, userMessage);
-    return client.replyMessage(event.replyToken, generateTimeFlexMessage(userMessage));
+  if (text === '予約変更・その他お問い合わせ') {
+    return client.replyMessage(event.replyToken, {
+      type: 'text',
+      text: `ご用件を入力してください。診療時間内にスタッフが応答いたします。\n\n■診療時間\n月～土（日・祝・その他休診日）\n8:45～12:15、13:30～17:30\n※状況や内容により、応答が遅れる場合がございます。お急ぎの場合はお電話ください。TEL：0489851271\n※入力いただいた内容にて予約の確定とはなりませんので、ご了承願います。`
+    });
   }
 
-  if (isTimeFormat(userMessage)) {
+  if (text === '新規予約') {
+    return client.replyMessage(event.replyToken, createDateFlexMessage());
+  }
+
+  if (isDateFormat(text)) {
+    userDateMap.set(userId, text);
+    return client.replyMessage(event.replyToken, createTimeFlexMessage(text));
+  }
+
+  if (isTimeFormat(text)) {
     const selectedDate = userDateMap.get(userId);
     if (selectedDate) {
       userDateMap.delete(userId);
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `「${selectedDate} の ${userMessage}」にて承知しました。担当者からご連絡させていただきます。※返信は営業時間内になります。ご了承ください`
+        text: `「${selectedDate} の ${text}」にて承知しました。担当者からご連絡させていただきます。※返信は営業時間内になります。ご了承ください`
       });
     } else {
       return client.replyMessage(event.replyToken, {
