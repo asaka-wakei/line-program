@@ -27,7 +27,7 @@ function isDateFormat(str) {
 }
 
 function isTimeFormat(str) {
-  return /^(8:45|9:00|10:00|11:00|13:30|14:00|15:00|16:00|16:15)$/.test(str);
+  return /^(9:00|9:30|10:00|10:30|11:00|13:15|13:45|14:45|15:15|15:45|16:15)$/.test(str);
 }
 
 function createTypeSelectionFlex() {
@@ -117,7 +117,7 @@ function createDateFlexMessage() {
 }
 
 function createTimeFlexMessage(date) {
-  const times = ['8:45','9:00','10:00','11:00','13:30','14:00','15:00','16:00','16:15'];
+  const times = ['9:00', '9:30', '10:00', '10:30', '11:00', '13:15', '13:45', '14:45', '15:15', '15:45', '16:15'];
   const buttons = times.map(time => ({
     type: 'button',
     action: {
