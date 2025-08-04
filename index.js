@@ -187,7 +187,7 @@ async function handleEvent(event) {
       userDateMap.delete(userId);
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `「${selectedDate} の ${text}」にて承知しました。担当者からご連絡させていただきます。※返信は営業時間内になります。ご了承ください`
+        text: `「${selectedDate} の ${text}」にて承知しました。担当者からご連絡させていただいてから予約確定となります。ご了承ください。※返信は営業時間内になります。
       });
     } else {
       return client.replyMessage(event.replyToken, {
