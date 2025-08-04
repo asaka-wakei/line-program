@@ -53,8 +53,8 @@ function createTypeSelectionFlex() {
             type: 'button',
             action: {
               type: 'message',
-              label: '新規予約',
-              text: '新規予約'
+              label: '初めて予約する方',
+              text: '初めて予約する方'
             },
             style: 'primary',
             margin: 'sm'
