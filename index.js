@@ -1,8 +1,10 @@
+
 const express = require('express');
 const line = require('@line/bot-sdk');
 const dayjs = require('dayjs');
 require('dayjs/locale/ja');
 dayjs.locale('ja');
+const JapaneseHolidays = require('japanese-holidays');
 
 const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -78,18 +80,29 @@ function createTypeSelectionFlex() {
 
 function createDateFlexMessage() {
   const contents = [];
-  for (let i = 0; i < 14; i++) {
+  let i = 0;
+  let added = 0;
+
+  while (added < 14) {
     const date = dayjs().add(i, 'day');
-    contents.push({
-      type: 'button',
-      action: {
-        type: 'message',
-        label: date.format('M/D (dd)'),
-        text: date.format('YYYY-MM-DD')
-      },
-      style: 'primary',
-      margin: 'sm'
-    });
+    const dayOfWeek = date.day(); // 0 = Sunday
+    const isHoliday = JapaneseHolidays.isHoliday(date.toDate());
+
+    if (dayOfWeek !== 0 && !isHoliday) {
+      contents.push({
+        type: 'button',
+        action: {
+          type: 'message',
+          label: date.format('M/D (dd)'),
+          text: date.format('YYYY-MM-DD')
+        },
+        style: 'primary',
+        margin: 'sm'
+      });
+      added++;
+    }
+
+    i++;
   }
 
   return {
