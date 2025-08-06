@@ -200,7 +200,7 @@ async function handleEvent(event) {
       userDateMap.delete(userId);
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `「${selectedDate} の ${text}」にて承知しました。\n担当者からご連絡させていただきます。\n※返信は営業時間内に実施いたします。ご返信させていただいてから予約の確定となりますので、ご了承ください。`
+        text: `「${selectedDate} の ${text}」にて承知しました。\n担当者からご連絡させていただきます。\n※返信は営業時間内に実施いたします。ご返信させていただいてから予約の確定となりますので、ご了承ください。\n※また、自動返信のため、休診日も表示されています。休診日のご予約はできませんのでご了承ください。\n休診日は当院のHPからご確認ください。`
       });
     } else {
       return client.replyMessage(event.replyToken, {
